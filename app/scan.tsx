@@ -2,11 +2,20 @@ import { Text, View, StyleSheet,Button, TouchableOpacity} from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
 import { useRouter } from "expo-router";
+import BottomSheet from '@gorhom/bottom-sheet';
+import {getByEAN} from '../src/services/scan';
+import CreateProductForm from '../src/components/create_product_form';
+
+interface BarCodeScannerResult {
+    data: string;
+    type: string;
+}
 
 export default function Scan() {
     const [permission, requestPermission] = useCameraPermissions();
-    const [data,setData]= useState(null);
+    const [data,setData]= useState(0);
     const [scanned,setScanned]= useState(false);
+    const [exist, setExist]= useState(false);
     const router = useRouter();
 
     if(!permission){
@@ -22,9 +31,14 @@ export default function Scan() {
         );
     }
 
-    const HandleBarCodeScanned = ({data}) =>{
+    const HandleBarCodeScanned = async ({data}: BarCodeScannerResult) =>{
+        const eanNumber = Number(data);
+        const products = await getByEAN(eanNumber)
         setScanned(true);
-        setData(data);
+        if (products.length != 0){
+            setExist(true)
+        }
+        setData(eanNumber);
     }
 
     return (
@@ -44,6 +58,12 @@ export default function Scan() {
                     }
                     }/>
                 </View>
+            )}
+            {!exist && (
+                <BottomSheet>
+                    <CreateProductForm codeEAN={data} cart_id={0}/>
+                </BottomSheet>
+
             )}
 
         </View>

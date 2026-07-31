@@ -22,7 +22,7 @@ export const getByEAN = async (eanCode : number) : Promise <Product[]> => {
         throw error;
     }
 
-    return data || []
+    return data ?? []
 };
 
 /**

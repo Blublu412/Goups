@@ -1,6 +1,6 @@
 import { Text, View, TextInput, Button, Alert } from "react-native"
 import { useForm, Controller } from "react-hook-form"
-import{ addproductToDB, addProductToCart} from '../src/services/scan'
+import{ addproductToDB, addProductToCart} from '../services/scan'
 
 interface AddProductProps {
     codeEAN: number;
@@ -16,7 +16,7 @@ interface FormInputs {
 //ajouter au fur et à mesure de l'avancement du formulaire
 }
 
-export default function addProduct({codeEAN, cart_id} : AddProductProps) {
+export default function CreateProductForm({codeEAN, cart_id} : AddProductProps) {
     const{ control, handleSubmit, formState: {errors}} = useForm({defaultValues:{
         EAN : String(codeEAN),
         Produit : "",
@@ -129,7 +129,7 @@ export default function addProduct({codeEAN, cart_id} : AddProductProps) {
                     </View>
                 )}/>
                 {errors.type && <Text>Le type est requis</Text>}
-            <Button title="Ajouter au panier" onPress={handleSubmit(onSubmit)} />
+            <Button title="Créer et Ajouter au panier" onPress={handleSubmit(onSubmit)} />
         </View>
     )
 
