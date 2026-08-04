@@ -1,10 +1,11 @@
-import { Text, View, StyleSheet,Button, TouchableOpacity} from "react-native";
+import { Text, View, StyleSheet,Button, TouchableOpacity, Alert} from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from "expo-router";
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import {getByEAN} from '../src/services/scan';
 import CreateProductForm from '../src/components/create_product_form';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 interface BarCodeScannerResult {
     data: string;
@@ -16,7 +17,8 @@ export default function Scan() {
     const [data,setData]= useState(0);
     const [scanned,setScanned]= useState(false);
     const [exist, setExist]= useState(false);
-    const router = useRouter();
+    const bottomSheetRef = useRef<BottomSheet>(null)
+    const snapPoints = useMemo(() => ['50%', '90%'], []);
 
     if(!permission){
         return <View/>;
@@ -39,34 +41,40 @@ export default function Scan() {
             setExist(true)
         }
         setData(eanNumber);
-    }
+    };
 
+    const HandleCloseSheet = () => {
+        bottomSheetRef.current?.close();
+    };
+    //TODO changer le cart id
     return (
-        <View style={styles.container}>
-            <CameraView
-            style={styles.camera}
-            facing='back'
-            onBarcodeScanned={scanned? undefined : HandleBarCodeScanned}
-            barcodeScannerSettings={{barcodeTypes: ["ean13", "ean8"]}}
-            />
-            {scanned && (
-                <View>
-                    <Text>Code détecté: {data}</Text>
-                    <Button title="HomePage" onPress={()=>{
-                        setScanned(false);
-                        router.push("/")
-                    }
-                    }/>
-                </View>
-            )}
-            {!exist && (
-                <BottomSheet>
-                    <CreateProductForm codeEAN={data} cart_id={0}/>
-                </BottomSheet>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <View style={styles.container}>
+                <CameraView
+                style={styles.camera}
+                facing='back'
+                onBarcodeScanned={scanned? undefined : HandleBarCodeScanned}
+                barcodeScannerSettings={{barcodeTypes: ["ean13", "ean8"]}}
+                />
+                {!exist && scanned && (
+                    <BottomSheet
+                        ref={bottomSheetRef}
+                        index={0}
+                        snapPoints={snapPoints}
+                        enablePanDownToClose={true}
+                        onChange={(index)=>{
+                            if(index==-1){
+                                setScanned(false)
+                            }
+                        }}>
+                        <BottomSheetView>
+                            <CreateProductForm codeEAN={data} cart_id={0} onClose={HandleCloseSheet}/>
+                        </BottomSheetView>
+                    </BottomSheet>
 
-            )}
-
-        </View>
+                )}
+            </View>
+        </GestureHandlerRootView>
     );
     
 }

@@ -1,22 +1,21 @@
-import { Text, View, TextInput, Button, Alert } from "react-native"
+import { Text, View, TextInput, Button } from "react-native"
 import { useForm, Controller } from "react-hook-form"
 import{ addproductToDB, addProductToCart} from '../services/scan'
 
 interface AddProductProps {
     codeEAN: number;
     cart_id: number;
-}
-
+    onClose: () => void;
+};
 interface FormInputs {
     EAN: string;
     Produit: string;
     prix: string;
     type: string;
     description: string
-//ajouter au fur et à mesure de l'avancement du formulaire
 }
 
-export default function CreateProductForm({codeEAN, cart_id} : AddProductProps) {
+export default function CreateProductForm({codeEAN, cart_id, onClose} : AddProductProps) {
     const{ control, handleSubmit, formState: {errors}} = useForm({defaultValues:{
         EAN : String(codeEAN),
         Produit : "",
@@ -39,11 +38,12 @@ export default function CreateProductForm({codeEAN, cart_id} : AddProductProps) 
                 decription: data.description
             });
 
-            await addProductToCart(newId, cart_id);
+            //await addProductToCart(newId, cart_id);
             //alert("Produit ajouté au panier");
         }catch{
             alert("Erreur lors de l'insertion en base de données.");
         }
+        onClose();
     }// à changer et mettre la fonction addProductToDB et remplir avec les champs du formulaire
 
     return(
@@ -71,7 +71,7 @@ export default function CreateProductForm({codeEAN, cart_id} : AddProductProps) 
                         <Text>Nom du produit:</Text>
                         <TextInput
                         placeholder="nom du Produit"
-                        onChange={onChange}
+                        onChangeText={onChange}
                         value={value}/>
                     </View>
                 )}/>
@@ -92,7 +92,7 @@ export default function CreateProductForm({codeEAN, cart_id} : AddProductProps) 
                         <TextInput
                         placeholder="0.00"
                         keyboardType="decimal-pad"
-                        onChange={onChange}
+                        onChangeText={onChange}
                         value={value}/>
                     </View>
                 )}/>
@@ -108,7 +108,7 @@ export default function CreateProductForm({codeEAN, cart_id} : AddProductProps) 
                         <Text>Type du produit:</Text>
                         <TextInput
                         placeholder="mettre le type du produit"
-                        onChange={onChange}
+                        onChangeText={onChange}
                         value={value}/>
                     </View>
                 )}/>
@@ -124,7 +124,7 @@ export default function CreateProductForm({codeEAN, cart_id} : AddProductProps) 
                         <TextInput
                         multiline
                         numberOfLines={4}
-                        onChange={onChange}
+                        onChangeText={onChange}
                         value={value}/>
                     </View>
                 )}/>
