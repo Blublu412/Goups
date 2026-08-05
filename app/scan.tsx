@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
 import {getByEAN} from '../src/services/scan';
 import CreateProductForm from '../src/components/create_product_form';
+import AddProductForm from '../src/components/add_product_form';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 interface BarCodeScannerResult {
@@ -15,6 +16,7 @@ interface BarCodeScannerResult {
 export default function Scan() {
     const [permission, requestPermission] = useCameraPermissions();
     const [data,setData]= useState(0);
+    const [product, setProduct] = useState<any>(null);
     const [scanned,setScanned]= useState(false);
     const [exist, setExist]= useState(false);
     const bottomSheetRef = useRef<BottomSheet>(null)
@@ -39,6 +41,7 @@ export default function Scan() {
         setScanned(true);
         if (products.length != 0){
             setExist(true)
+            setProduct(products[0])
         }
         setData(eanNumber);
     };
@@ -56,7 +59,7 @@ export default function Scan() {
                 onBarcodeScanned={scanned? undefined : HandleBarCodeScanned}
                 barcodeScannerSettings={{barcodeTypes: ["ean13", "ean8"]}}
                 />
-                {!exist && scanned && (
+                { scanned && (
                     <BottomSheet
                         ref={bottomSheetRef}
                         index={0}
@@ -65,13 +68,26 @@ export default function Scan() {
                         onChange={(index)=>{
                             if(index==-1){
                                 setScanned(false)
+                                setExist(false)
+                                setProduct(null)
                             }
                         }}>
                         <BottomSheetView>
-                            <CreateProductForm codeEAN={data} cart_id={0} onClose={HandleCloseSheet}/>
+                            {exist && product ? (
+                                <AddProductForm
+                                    data={product}
+                                    cart_id={0}
+                                    onClose={HandleCloseSheet}
+                                />
+                            ) : (
+                                <CreateProductForm
+                                    codeEAN={data}
+                                    cart_id={0}
+                                    onClose={HandleCloseSheet}
+                                />
+                            )}
                         </BottomSheetView>
                     </BottomSheet>
-
                 )}
             </View>
         </GestureHandlerRootView>
