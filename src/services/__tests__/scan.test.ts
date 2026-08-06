@@ -27,11 +27,6 @@ describe('Tests service scan', ()=>{
     /*                               getByEAN                                     */
     /* ------------------------------------------------------------------------- */
     describe('getByEAN', () =>{
-        //fait avant chaque test
-        beforeEach(() => {
-            jest.clearAllMocks();
-        });
-
 
         it('doit retourner un produit si le code EAN existe dans la base de donnée', async ()=>{
             const fakeProduct = [{description: 'bien justeuse', EAN: 3017620422003, id: 1, name: "Pomme", price: 0.5, type: "fruit"}];
