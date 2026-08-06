@@ -9,3 +9,13 @@ export const supabase = {
   eq: jest.fn().mockReturnThis(),
   single: jest.fn(),
 };
+
+export interface MockSupabaseClient {
+  from: jest.Mock<any>;
+  select: jest.Mock<any>;
+  insert: jest.Mock<any>;
+  update: jest.Mock<any>;
+  delete: jest.Mock<any>;
+  eq: jest.Mock<any>;
+  single: jest.Mock<any>;
+}

@@ -1,15 +1,26 @@
 import { getByEAN, addProductToCart, addproductToDB, updateProduct } from '../scan';
-import { supabase } from '../../lib/supabase';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { supabase } from '../../lib/supabase';
+import type { MockSupabaseClient } from '../../lib/__mocks__/supabase';
 
 jest.mock('../../lib/supabase');
 
-const supabaseMock = supabase as any;
+const supabaseMock = supabase as unknown as MockSupabaseClient;
+
+jest.mock('../../lib/supabase');
+
 
 describe('Tests service scan', ()=>{
 
     beforeEach(()=>{
         jest.clearAllMocks();
+
+        supabaseMock.from.mockReturnThis();
+        supabaseMock.select.mockReturnThis();
+        supabaseMock.insert.mockReturnThis();
+        supabaseMock.update.mockReturnThis();
+        supabaseMock.delete.mockReturnThis();
+        supabaseMock.eq.mockReturnThis();
     });
 
     /* --------------------------------------------------------------------------- */
@@ -25,7 +36,7 @@ describe('Tests service scan', ()=>{
         it('doit retourner un produit si le code EAN existe dans la base de donnée', async ()=>{
             const fakeProduct = [{description: 'bien justeuse', EAN: 3017620422003, id: 1, name: "Pomme", price: 0.5, type: "fruit"}];
 
-            (supabaseMock.eq as jest.Mock<any>).mockResolvedValue({
+            supabaseMock.eq.mockResolvedValue({
                 data: fakeProduct,
                 erro: null,
             });
@@ -41,12 +52,12 @@ describe('Tests service scan', ()=>{
 
         it('doit retourner un tableau vide si le produit est inexistant', async () =>{
 
-            (supabaseMock.eq as jest.Mock<any>).mockResolvedValue({
+            supabaseMock.eq.mockResolvedValue({
                 data: [],
                 error: null,
             });
 
-            const result = await getByEAN(99999999999);
+            const result = await getByEAN(999999999);
 
             expect(supabaseMock.eq).toHaveBeenCalledWith('EAN', 999999999);
             expect(result).toEqual([]);
@@ -56,7 +67,7 @@ describe('Tests service scan', ()=>{
         it('devrait lever une erreur si la requête Supabase échoue', async () => {
             const dbError = new Error('Erreur réseau Supabase');
 
-            (supabaseMock.eq as jest.Mock<any>).mockResolvedValue({
+            supabaseMock.eq.mockResolvedValue({
                 data: null,
                 error: dbError,
             });
@@ -100,10 +111,12 @@ describe('Tests service scan', ()=>{
     describe('addproductToDB', () => {
         it('devrait ajouter un produit en BDD et retourner son id', async () => {
             const newProduct = {
+                decription:"",
                 name: 'Pomme',
                 price: 0.5,
                 EAN: 3012345678901,
-            } as any;
+                type: "fruit",
+            };
 
             supabaseMock.single.mockResolvedValue({
                 data: { id: 42 },
@@ -127,7 +140,13 @@ describe('Tests service scan', ()=>{
             });
 
             await expect(
-                addproductToDB({ name: 'Pomme' } as any)
+                addproductToDB({ 
+                decription:"",
+                name: 'Pomme',
+                price: 0.5,
+                EAN: 3012345678901,
+                type: "fruit",
+            })
             ).rejects.toThrow(mockError);
         });
     });
@@ -144,7 +163,7 @@ describe('Tests service scan', ()=>{
                 error: null,
             });
 
-            await updateProduct(1, updateData as any);
+            await updateProduct(1, updateData);
 
             expect(supabaseMock.from).toHaveBeenCalledWith('Product');
             expect(supabaseMock.update).toHaveBeenCalledWith(updateData);
@@ -159,7 +178,7 @@ describe('Tests service scan', ()=>{
             });
 
             await expect(
-                updateProduct(999, { name: 'Inexistant' } as any)
+                updateProduct(999, { name: 'Inexistant' })
             ).resolves.not.toThrow();
         });
 
@@ -172,7 +191,7 @@ describe('Tests service scan', ()=>{
             });
 
             await expect(
-                updateProduct(1, { name: 'Jus d\'orange' } as any)
+                updateProduct(1, { name: 'Jus d\'orange' })
             ).rejects.toThrow(mockError);
         });
     });
