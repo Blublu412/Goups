@@ -91,9 +91,9 @@ export default function Scan() {
                 )}
             </View>
         </GestureHandlerRootView>
-    );
+    )
     
-}
+};
 
 const styles = StyleSheet.create({
   container: {

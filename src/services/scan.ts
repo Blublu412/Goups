@@ -3,7 +3,6 @@ import { Tables, TablesInsert, TablesUpdate} from '../lib/database.types';
 
 // Extraction rapide de tes types pour un code plus lisible
 type Product = Tables<'Product'>;
-type Cart = Tables<'Cart'>;
 
 /**
  * Fonction qui recupère un produit par son code EAN dans la base de donnée
