@@ -1,49 +1,64 @@
-import { Text, View, TextInput, Button, Alert } from "react-native"
-import { useForm, Controller } from "react-hook-form"
-import{ addproductToDB, addProductToCart} from '../src/services/scan'
+import { Text, View, TextInput, Button } from "react-native";
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import{ addproductToDB, addProductToCart, updateProduct} from '../services/scan';
 
 interface AddProductProps {
-    codeEAN: number;
+    data: {
+        decription: string | null;
+        EAN: number | null;
+        id: number;
+        name: string;
+        price: number | null;
+        type: string;
+        };
     cart_id: number;
-}
+    onClose: () => void;
+};
 
 interface FormInputs {
     EAN: string;
     Produit: string;
     prix: string;
     type: string;
-    description: string
-//ajouter au fur et à mesure de l'avancement du formulaire
+    description: string | null;
 }
 
-export default function addProduct({codeEAN, cart_id} : AddProductProps) {
+export default function AddProductForm({data,cart_id,onClose}: AddProductProps){
+    const [modif, setModif] = useState(false);
     const{ control, handleSubmit, formState: {errors}} = useForm({defaultValues:{
-        EAN : String(codeEAN),
-        Produit : "",
-        prix: "",
-        type : "",
-        description: "",
+        EAN : String(data.EAN),
+        Produit : data.name,
+        prix: String(data.price),
+        type : data.type,
+        description: data.decription,
 
     }})
 
-    const onSubmit = async (data: FormInputs)=>{
-        try{
-            const eanAsNumber = parseInt(data.EAN, 10);
-            const priceAsFloat = parseFloat(data.prix);
+    const onChange = () =>{
+        setModif(true)
+    }
 
-            const newId = await addproductToDB({
-                EAN: eanAsNumber,
-                name: data.Produit,
-                price: priceAsFloat,
-                type: data.type,
-                decription: data.description
-            });
-
-            await addProductToCart(newId, cart_id);
-            //alert("Produit ajouté au panier");
-        }catch{
-            alert("Erreur lors de l'insertion en base de données.");
+    const onSubmit = async (formdata: FormInputs)=>{
+        if(modif){
+            try{
+                const eanAsNumber = parseInt(formdata.EAN, 10);
+                const priceAsFloat = parseFloat(formdata.prix);
+    
+                await updateProduct(data.id,{
+                    EAN: eanAsNumber,
+                    name: formdata.Produit,
+                    price: priceAsFloat,
+                    type: formdata.type,
+                    decription: formdata.description
+                });
+    
+            }catch{
+                alert("Erreur lors de l'insertion en base de données.");
+            }
         }
+        //await addProductToCart(product_id, cart_id);
+        onClose();
     }// à changer et mettre la fonction addProductToDB et remplir avec les champs du formulaire
 
     return(
@@ -70,8 +85,8 @@ export default function addProduct({codeEAN, cart_id} : AddProductProps) {
                     <View>
                         <Text>Nom du produit:</Text>
                         <TextInput
-                        placeholder="nom du Produit"
-                        onChange={onChange}
+                        editable={modif}
+                        onChangeText={onChange}
                         value={value}/>
                     </View>
                 )}/>
@@ -90,9 +105,9 @@ export default function addProduct({codeEAN, cart_id} : AddProductProps) {
                     <View>
                         <Text>Prix:</Text>
                         <TextInput
-                        placeholder="0.00"
+                        editable={modif}
                         keyboardType="decimal-pad"
-                        onChange={onChange}
+                        onChangeText={onChange}
                         value={value}/>
                     </View>
                 )}/>
@@ -107,8 +122,8 @@ export default function addProduct({codeEAN, cart_id} : AddProductProps) {
                     <View>
                         <Text>Type du produit:</Text>
                         <TextInput
-                        placeholder="mettre le type du produit"
-                        onChange={onChange}
+                        editable={modif}
+                        onChangeText={onChange}
                         value={value}/>
                     </View>
                 )}/>
@@ -123,12 +138,14 @@ export default function addProduct({codeEAN, cart_id} : AddProductProps) {
                         <Text>Description:</Text>
                         <TextInput
                         multiline
+                        editable={modif}
                         numberOfLines={4}
-                        onChange={onChange}
-                        value={value}/>
+                        onChangeText={onChange}
+                        value={value??""}/>
                     </View>
                 )}/>
                 {errors.type && <Text>Le type est requis</Text>}
+            {!modif && <Button title="Modifier les informations" onPress={onChange} />}
             <Button title="Ajouter au panier" onPress={handleSubmit(onSubmit)} />
         </View>
     )

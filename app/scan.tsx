@@ -1,13 +1,26 @@
-import { Text, View, StyleSheet,Button, TouchableOpacity} from "react-native";
+import { Text, View, StyleSheet,Button, TouchableOpacity, Alert} from "react-native";
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from "expo-router";
+import BottomSheet, {BottomSheetView} from '@gorhom/bottom-sheet';
+import {getByEAN} from '../src/services/scan';
+import CreateProductForm from '../src/components/create_product_form';
+import AddProductForm from '../src/components/add_product_form';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+interface BarCodeScannerResult {
+    data: string;
+    type: string;
+}
 
 export default function Scan() {
     const [permission, requestPermission] = useCameraPermissions();
-    const [data,setData]= useState(null);
+    const [data,setData]= useState(0);
+    const [product, setProduct] = useState<any>(null);
     const [scanned,setScanned]= useState(false);
-    const router = useRouter();
+    const [exist, setExist]= useState(false);
+    const bottomSheetRef = useRef<BottomSheet>(null)
+    const snapPoints = useMemo(() => ['50%', '90%'], []);
 
     if(!permission){
         return <View/>;
@@ -22,31 +35,62 @@ export default function Scan() {
         );
     }
 
-    const HandleBarCodeScanned = ({data}) =>{
+    const HandleBarCodeScanned = async ({data}: BarCodeScannerResult) =>{
+        const eanNumber = Number(data);
+        const products = await getByEAN(eanNumber)
         setScanned(true);
-        setData(data);
-    }
+        if (products.length != 0){
+            setExist(true)
+            setProduct(products[0])
+        }
+        setData(eanNumber);
+    };
 
+    const HandleCloseSheet = () => {
+        bottomSheetRef.current?.close();
+    };
+    //TODO changer le cart id
     return (
-        <View style={styles.container}>
-            <CameraView
-            style={styles.camera}
-            facing='back'
-            onBarcodeScanned={scanned? undefined : HandleBarCodeScanned}
-            barcodeScannerSettings={{barcodeTypes: ["ean13", "ean8"]}}
-            />
-            {scanned && (
-                <View>
-                    <Text>Code détecté: {data}</Text>
-                    <Button title="HomePage" onPress={()=>{
-                        setScanned(false);
-                        router.push("/")
-                    }
-                    }/>
-                </View>
-            )}
-
-        </View>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <View style={styles.container}>
+                <CameraView
+                style={styles.camera}
+                facing='back'
+                onBarcodeScanned={scanned? undefined : HandleBarCodeScanned}
+                barcodeScannerSettings={{barcodeTypes: ["ean13", "ean8"]}}
+                />
+                { scanned && (
+                    <BottomSheet
+                        ref={bottomSheetRef}
+                        index={0}
+                        snapPoints={snapPoints}
+                        enablePanDownToClose={true}
+                        onChange={(index)=>{
+                            if(index==-1){
+                                setScanned(false)
+                                setExist(false)
+                                setProduct(null)
+                            }
+                        }}>
+                        <BottomSheetView>
+                            {exist && product ? (
+                                <AddProductForm
+                                    data={product}
+                                    cart_id={0}
+                                    onClose={HandleCloseSheet}
+                                />
+                            ) : (
+                                <CreateProductForm
+                                    codeEAN={data}
+                                    cart_id={0}
+                                    onClose={HandleCloseSheet}
+                                />
+                            )}
+                        </BottomSheetView>
+                    </BottomSheet>
+                )}
+            </View>
+        </GestureHandlerRootView>
     );
     
 }
