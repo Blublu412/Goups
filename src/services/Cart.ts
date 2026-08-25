@@ -9,7 +9,9 @@ interface productId{
 }
 
 /**
- * 
+ * Fonction qui crée un panier
+ * @param user_id l'id du compte connecté
+ * @returns l'id du panier qui vient d'être crée
  */
 export const createCart = async(user_id: number) : Promise<number>=>{
     const {data, error} = await supabase
@@ -26,14 +28,16 @@ export const createCart = async(user_id: number) : Promise<number>=>{
 };
 
 /**
- * 
+ * Focntion qui permet d'obtenir tout les panier de moins de 1mois d'un compte
+ * @param user_id l'id du compte connecté
+ * @returns une liste de panier
  */
 export const getCarts = async(user_id: number): Promise<Cart[]> =>{
     const date = new Date();
     date.setDate(date.getDate()-31);
     const {data, error} = await supabase
     .from('Cart')
-    .select()
+    .select('*')
     .lt('created_at', date);
 
     if(error){
@@ -44,9 +48,11 @@ export const getCarts = async(user_id: number): Promise<Cart[]> =>{
 }
 
 /**
- * 
+ * Fonction qui permet d'obtenir les id des produits dans un panier
+ * @param cart_id l'id du panier
+ * @returns une liste de nombre qui sont des id de produits 
  */
-export const getProductIdInCart = async(cart_id:number): Promise<productId[]> =>{
+export const getProductsIdInCart = async(cart_id:number): Promise<productId[]> =>{
     const {data, error} = await supabase
     .from('Contain')
     .select('id_product')
